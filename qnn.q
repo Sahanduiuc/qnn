@@ -63,7 +63,7 @@ asgd:{[x;y;m;l]
     irp:1.1;     /learning rate increase parameter
     drp:0.5;     /learning rate decrease parameter
     thrsh:1e-16; /threshold
-    gr:gr:gradstep[x;y;m;l];
+    gr:gradstep[x;y;m;l];
     pcost:first gr;
     cm: m - lr * 1_gr;
     while [(lr > thrsh%2) and thrsh < abs pcost - first gr:gradstep[x;y;cm;l];
@@ -77,6 +77,35 @@ asgd:{[x;y;m;l]
         ];
     cm
     }
+
+/stochastic gradient descent
+sgd:{[x;y;m;l]
+    lr:0.1;
+    irp:1.1;
+    drp:0.5;
+    thrsh:1e-16;
+    ecnt:5;
+    gr:gradstep[x;y;m;l];
+    pcost:first gr;
+    cm: m - lr * 1_gr;
+    do[ecnt;
+        xi:0;
+        do[count y;
+            gr:gradstep[enlist x xi;enlist y xi;cm;l];
+            xi+:1;
+            cost:first gr;
+            if [(lr < thrsh%2) and thrsh > abs pcost - cost; :cm];
+            if [cost > pcost; lr *: drp];
+            if [cost < pcost;
+                lr *: irp;
+                cm -: lr * 1_gr;
+                pcost:cost;
+                ];
+            ];
+        ];
+    cm
+    }
+
 
 /mulrand: multiple random inititalization and select best one
 mulrand:{[x;y;mp;l;c]
